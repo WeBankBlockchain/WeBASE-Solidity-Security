@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="info">
+    <Properties>
+        <Property name="logPath">./log</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="console" target="SYSTEM_OUT">
+            <PatternLayout
+                pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5p %c{1}(%F:%L) - %m%n" />
+        </Console>
+
+        <RollingFile name="WeBASESoliditySecurity" fileName="${logPath}/WeBASE-Solidity-Security.log"
+            filePattern="${logPath}/WeBASE-Solidity-Security.log.%d{yyyy-MM-dd}.%i.log.gz">
+            <PatternLayout
+                pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5p %c{1}(%L) - %m%n" />
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="200 MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="24" >
+            </DefaultRolloverStrategy>
+        </RollingFile>
+
+        <Async name="asyncWeBASESoliditySecurity" bufferSize="512">
+            <AppenderRef ref="WeBASE-Solidity-Security" />
+        </Async>
+    </Appenders>
+
+    <Loggers>
+        <Root level="info">
+            <AppenderRef ref="asyncWeBASESoliditySecurity" />
+        </Root>
+    </Loggers>
+</Configuration>
