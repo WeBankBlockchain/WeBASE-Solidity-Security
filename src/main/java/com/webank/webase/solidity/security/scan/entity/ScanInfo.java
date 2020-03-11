@@ -22,8 +22,7 @@ import lombok.Data;
  * 
  */
 @Data
-public class CompileInfo {
-    private String contractName;
-    private String contractBin;
-    private List<Object> contractAbi;
+public class ScanInfo {
+    private Integer scanResult;
+    private String scanInfo;
 }
