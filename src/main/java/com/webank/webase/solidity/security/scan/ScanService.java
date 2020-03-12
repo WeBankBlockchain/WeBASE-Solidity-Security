@@ -15,18 +15,15 @@
 package com.webank.webase.solidity.security.scan;
 
 
-import com.webank.webase.solidity.security.base.ConstantCode;
-import com.webank.webase.solidity.security.base.ResponseEntity;
 import com.webank.webase.solidity.security.base.exception.BaseException;
 import com.webank.webase.solidity.security.scan.entity.ScanInfo;
+import com.webank.webase.solidity.security.scan.entity.ScanInputParam;
 import com.webank.webase.solidity.security.util.CommonUtils;
-
 import java.io.File;
-import java.io.IOException;
-
+import java.util.ArrayList;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * ScanService.
@@ -35,45 +32,45 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 @Service
 public class ScanService {
+
+    private static final String BASE_COMMAND = "slither %s";
+
     /**
      * contract scan.
      * 
      * @param zipFile file
      * @return
      */
-    public ResponseEntity scan(MultipartFile zipFile) throws BaseException, IOException {
-        ResponseEntity response = new ResponseEntity(ConstantCode.RET_SUCCEED);
-        String path = new File("temp").getAbsolutePath();
-        //clear temp folder
-        //CommonUtils.deleteFiles(path);
-        //unzip
-        CommonUtils.unZipFiles(zipFile, path);
+    public List<ScanInfo> scan(ScanInputParam inputParam) throws BaseException {
 
-        exeScan(String cmd, String path)
+        List<ScanInfo> scanInfos = new ArrayList<>();
 
-        return response;
-    }
-
-    public static ScanInfo exeScan(String cmd, String path){
-        Process proc = null;
-        try {
-            proc = Runtime.getRuntime().exec(cmd,null,new File(path));
-            proc.getInputStream();
-            proc.getErrorStream();
-            proc.waitFor();
-            Thread.sleep(1000);//等待后台线程读写完毕
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                proc.getErrorStream().close();
-                proc.getInputStream().close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            proc.destroy();
+        String path =
+                new File("contract").getAbsolutePath() + File.separator + inputParam.getAppid();
+        // clear folder
+        CommonUtils.deleteFiles(path);
+        // unzip
+        CommonUtils.zipBase64ToFile(inputParam.getContractSource(), path);
+        // get sol files
+        File solFileList = new File(path);
+        File[] solFiles = solFileList.listFiles();
+        if (solFiles == null || solFiles.length == 0) {
+            return scanInfos;
         }
+
+        for (File solFile : solFiles) {
+            if (!solFile.getName().endsWith(".sol")) {
+                continue;
+            }
+            String contractName =
+                    solFile.getName().substring(0, solFile.getName().lastIndexOf("."));
+            String command = String.format(BASE_COMMAND, path + File.separator + solFile.getName());
+            ScanInfo scanInfo = CommonUtils.shellExecuter(command, path);
+            scanInfo.setContractName(contractName);
+            scanInfos.add(scanInfo);
+        }
+
+        log.debug("end scan.");
+        return scanInfos;
     }
 }

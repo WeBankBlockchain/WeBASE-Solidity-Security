@@ -12,36 +12,20 @@
  * the License.
  */
 
-package com.webank.webase.solidity.security.base;
-
-import lombok.Data;
+package com.webank.webase.solidity.security.base.code;
 
 /**
- * RetCode.
+ * ConstantCode.
  *
  */
-@Data
-public class RetCode {
-    private Integer code;
-    private String msg;
+public interface ConstantCode {
+    // return success
+    RetCode RET_SUCCEED = RetCode.mark(0, "success");
 
-    public RetCode() {}
+    // generate code
+    RetCode SHELL_EXECUTE_ERROR = RetCode.mark(203001, "shell execute error");
 
-    public RetCode(int code, String msg) {
-        this.code = code;
-        this.msg = msg;
-    }
-
-    public static RetCode mark(int code, String msg) {
-        return new RetCode(code, msg);
-    }
-
-    public static RetCode mark(Integer code) {
-        return new RetCode(code, null);
-    }
-
-    @Override
-    public String toString() {
-        return "RetCode [code=" + code + ", msg=" + msg + "]";
-    }
+    // system error
+    RetCode SYSTEM_EXCEPTION = RetCode.mark(103001, "system error");
+    RetCode PARAM_EXCEPTION = RetCode.mark(103002, "param valid fail");
 }

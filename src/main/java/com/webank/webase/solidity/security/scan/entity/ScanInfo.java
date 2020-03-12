@@ -14,7 +14,6 @@
 
 package com.webank.webase.solidity.security.scan.entity;
 
-import java.util.List;
 import lombok.Data;
 
 /**
@@ -23,6 +22,15 @@ import lombok.Data;
  */
 @Data
 public class ScanInfo {
-    private Integer scanResult;
+
+    private String contractName;
+    private int scanResult;
     private String scanInfo;
+
+    public ScanInfo(String contractName, int scanResult, String scanInfo) {
+        super();
+        this.contractName = contractName;
+        this.scanResult = scanResult;
+        this.scanInfo = scanInfo;
+    }
 }
