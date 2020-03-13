@@ -40,8 +40,8 @@ public class SwaggerConfig {
     @Bean
     public Docket documentation() {
         return new Docket(DocumentationType.SWAGGER_2).select()
-                .apis(RequestHandlerSelectors.basePackage("com.webank.webase.transaction")).build()
-                .protocols(new HashSet<String>(Lists.newArrayList("http"))).pathMapping("/")
+                .apis(RequestHandlerSelectors.basePackage("com.webank.webase.solidity.security"))
+                .build().protocols(new HashSet<String>(Lists.newArrayList("http"))).pathMapping("/")
                 .apiInfo(apiInfo()).enable(true);
     }
 
@@ -51,7 +51,7 @@ public class SwaggerConfig {
      * @return
      */
     private ApiInfo apiInfo() {
-        return new ApiInfoBuilder().title("API document").description("transaction api")
-                .version("1.0").build();
+        return new ApiInfoBuilder().title("API document")
+                .description("WeBASE-Solidity-Security api").version("2.0").build();
     }
 }

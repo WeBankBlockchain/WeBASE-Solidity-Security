@@ -12,17 +12,24 @@
  * the License.
  */
 
-package com.webank.webase.solidity.security.scan.entity;
+package com.webank.webase.solidity.security.base.exception;
 
-import java.util.List;
-import lombok.Data;
+import com.webank.webase.solidity.security.base.code.RetCode;
 
 /**
- * contract compile info.
- * 
+ * param Exception
  */
-@Data
-public class ScanInfo {
-    private Integer scanResult;
-    private String scanInfo;
+public class ParamException extends RuntimeException {
+
+    private static final long serialVersionUID = 1L;
+    private RetCode retCode;
+
+    public ParamException(int code, String msg) {
+        super(msg);
+        this.retCode = new RetCode(code, msg);
+    }
+
+    public RetCode getRetCode() {
+        return retCode;
+    }
 }

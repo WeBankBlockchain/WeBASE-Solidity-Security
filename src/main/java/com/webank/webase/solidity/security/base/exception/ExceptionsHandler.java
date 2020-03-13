@@ -14,63 +14,86 @@
 
 package com.webank.webase.solidity.security.base.exception;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.webank.webase.solidity.security.base.ConstantCode;
+import com.alibaba.fastjson.JSON;
 import com.webank.webase.solidity.security.base.ResponseEntity;
-import com.webank.webase.solidity.security.base.RetCode;
+import com.webank.webase.solidity.security.base.code.ConstantCode;
+import com.webank.webase.solidity.security.base.code.RetCode;
 import java.util.Optional;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.TypeMismatchException;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
- * ExceptionsHandler.
- * 
+ * catch an handler exception.
  */
 @ControllerAdvice
-@Slf4j
+@Log4j2
 public class ExceptionsHandler {
-    @Autowired
-    ObjectMapper mapper;
 
     /**
-     * BaseException Handler.
-     * 
-     * @param baseException e
-     * @return
+     * catch：BaseException.
      */
     @ResponseBody
     @ExceptionHandler(value = BaseException.class)
-    public ResponseEntity myExceptionHandler(BaseException baseException) throws Exception {
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    public ResponseEntity myExceptionHandler(BaseException baseException) {
         log.warn("catch business exception", baseException);
         RetCode retCode = Optional.ofNullable(baseException).map(BaseException::getRetCode)
-                .orElse(ConstantCode.SYSTEM_ERROR);
+                .orElse(ConstantCode.SYSTEM_EXCEPTION);
 
-        ResponseEntity rep = new ResponseEntity(retCode);
-        log.warn("business exception return:{}", mapper.writeValueAsString(rep));
-        return rep;
+        ResponseEntity bre = new ResponseEntity(retCode);
+        log.warn("business exception return:{}", JSON.toJSONString(bre));
+        return bre;
     }
 
     /**
-     * Exception Handler.
-     * 
-     * @param exc e
-     * @return
+     * catch:paramException
      */
     @ResponseBody
-    @ExceptionHandler(value = Exception.class)
-    public ResponseEntity exceptionHandler(Exception exc) {
-        log.info("catch  exception", exc);
-        RetCode retCode = ConstantCode.SYSTEM_ERROR;
-        ResponseEntity rep = new ResponseEntity(retCode);
-        try {
-            log.warn("exceptionHandler system exception return:{}", mapper.writeValueAsString(rep));
-        } catch (JsonProcessingException ex) {
-            log.warn("exceptionHandler system exception");
-        }
-        return rep;
+    @ExceptionHandler(value = ParamException.class)
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    public ResponseEntity paramExceptionHandler(ParamException paramException) {
+        log.warn("catch param exception", paramException);
+        RetCode retCode = Optional.ofNullable(paramException).map(ParamException::getRetCode)
+                .orElse(ConstantCode.SYSTEM_EXCEPTION);
+
+        ResponseEntity bre = new ResponseEntity(retCode);
+        log.warn("param exception return:{}", JSON.toJSONString(bre));
+        return bre;
+    }
+
+    /**
+     * parameter exception:TypeMismatchException
+     */
+    @ResponseBody
+    @ExceptionHandler(value = TypeMismatchException.class)
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    public ResponseEntity typeMismatchExceptionHandler(TypeMismatchException ex) {
+        log.warn("catch typeMismatchException", ex);
+
+        RetCode retCode = new RetCode(ConstantCode.PARAM_EXCEPTION.getCode(), ex.getMessage());
+        ResponseEntity bre = new ResponseEntity(retCode);
+        log.warn("typeMismatchException return:{}", JSON.toJSONString(bre));
+        return bre;
+    }
+
+    /**
+     * catch：RuntimeException.
+     */
+    @ResponseBody
+    @ExceptionHandler(value = RuntimeException.class)
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ResponseEntity exceptionHandler(RuntimeException exc) {
+        log.warn("catch RuntimeException", exc);
+        // default system exception
+        RetCode retCode = ConstantCode.SYSTEM_EXCEPTION;
+
+        ResponseEntity bre = new ResponseEntity(retCode);
+        log.warn("system RuntimeException return:{}", JSON.toJSONString(bre));
+        return bre;
     }
 }

@@ -1,0 +1,7 @@
+server:
+  port: 5007
+  servlet:
+    context-path: /WeBASE-Solidity-Security
+
+logging:
+  config: classpath:log4j2.xml
