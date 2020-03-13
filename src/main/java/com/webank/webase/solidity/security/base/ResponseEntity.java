@@ -14,6 +14,7 @@
 
 package com.webank.webase.solidity.security.base;
 
+import com.webank.webase.solidity.security.base.code.RetCode;
 import lombok.Data;
 
 /**

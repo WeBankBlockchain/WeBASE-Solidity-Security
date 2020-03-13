@@ -15,24 +15,25 @@
 package com.webank.webase.solidity.security.util;
 
 import com.alibaba.fastjson.JSON;
-import com.webank.webase.solidity.security.base.ConstantCode;
+import com.webank.webase.solidity.security.base.code.ConstantCode;
 import com.webank.webase.solidity.security.base.exception.BaseException;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Enumeration;
+import java.io.InputStreamReader;
+import java.util.Base64;
+import java.util.List;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 import lombok.extern.slf4j.Slf4j;
-import org.fisco.bcos.web3j.crypto.EncryptType;
-import org.fisco.bcos.web3j.crypto.Sign.SignatureData;
-import org.fisco.bcos.web3j.utils.Numeric;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * CommonUtils.
@@ -41,119 +42,126 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 public class CommonUtils {
 
-    public static final int publicKeyLength_64 = 64;
-
     /**
-     * unZipFiles.
+     * 文件Base64加密
      * 
-     * @param zipFile file
-     * @param path path
+     * @param filePath 文件路径
+     * @return
      */
-    public static void unZipFiles(MultipartFile zipFile, String path)
-            throws IOException, BaseException {
-        if (zipFile.isEmpty()) {
-            throw new BaseException(ConstantCode.FILE_IS_EMPTY);
-        }
-        if (!path.endsWith(File.separator)) {
-            path = path + File.separator;
-        }
-        String fileName = zipFile.getOriginalFilename();
-        int pos = fileName.lastIndexOf(".");
-        String extName = fileName.substring(pos + 1).toLowerCase();
-        if (!extName.equals("zip")) {
-            throw new BaseException(ConstantCode.NOT_A_ZIP_FILE);
-        }
-        File file = new File(path + fileName);
-        if (!file.getParentFile().exists()) {
-            file.getParentFile().mkdirs();
-        }
-        zipFile.transferTo(file);
-        ZipFile zf = null;
-        try {
-            zf = new ZipFile(file);
-            for (Enumeration entries = zf.entries(); entries.hasMoreElements();) {
-                ZipEntry entry = (ZipEntry) entries.nextElement();
-                String zipEntryName = entry.getName();
-                if (!zipEntryName.endsWith(".sol")) {
-                    continue;
-                }
-                InputStream inputStream = null;
-                OutputStream outputStream = null;
-                try {
-                    inputStream = zf.getInputStream(entry);
-                    String outPath = (path + zipEntryName).replaceAll("\\*", "/");
-                    log.info("unZipFiles outPath:{}", cleanString(outPath));
-
-                    outputStream = new FileOutputStream(cleanString(outPath));
-                    byte[] buf1 = new byte[1024];
-                    int len;
-                    while ((len = inputStream.read(buf1)) > 0) {
-                        outputStream.write(buf1, 0, len);
-                    }
-                    outputStream.flush();
-                } catch (IOException e) {
-                    System.out.println("unZipFiles IOException:" + e.toString());
-                } finally {
-                    close(outputStream);
-                    close(inputStream);
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("unZipFiles IOException:" + e.toString());
-        } finally {
-            close(zf);
-        }
-        if (file.exists()) {
-            file.delete();
-        }
-    }
-
-    private static String cleanString(String str) {
-        if (str == null) {
+    public static String fileToBase64(String filePath) {
+        if (filePath == null) {
             return null;
         }
-        String cleanString = "";
-        for (int i = 0; i < str.length(); ++i) {
-            cleanString += cleanChar(str.charAt(i));
+        FileInputStream inputFile = null;
+        try {
+            File file = new File(filePath);
+            inputFile = new FileInputStream(file);
+            byte[] buffer = new byte[(int) file.length()];
+            inputFile.read(buffer);
+            return Base64.getEncoder().encodeToString(buffer);
+        } catch (IOException e) {
+            log.error("base64ToFile IOException:[{}]", e.toString());
+        } finally {
+            close(inputFile);
         }
-        return cleanString;
+        return null;
     }
 
-    private static char cleanChar(char value) {
-        // 0 - 9
-        for (int i = 48; i < 58; ++i) {
-            if (value == i) {
-                return (char) i;
+    /**
+     * 文件压缩并Base64加密
+     * 
+     * @param srcFiles
+     * @return
+     */
+    public static String fileToZipBase64(List<File> srcFiles) {
+        long start = System.currentTimeMillis();
+        String toZipBase64 = "";
+        ZipOutputStream zos = null;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            zos = new ZipOutputStream(baos);
+            for (File srcFile : srcFiles) {
+                byte[] buf = new byte[1024];
+                log.info("fileToZipBase64 fileName: [{}] size: [{}] ", srcFile.getName(),
+                        srcFile.length());
+                zos.putNextEntry(new ZipEntry(srcFile.getName()));
+                int len;
+                FileInputStream in = new FileInputStream(srcFile);
+                while ((len = in.read(buf)) != -1) {
+                    zos.write(buf, 0, len);
+                }
+                zos.closeEntry();
+                in.close();
             }
+            long end = System.currentTimeMillis();
+            log.info("fileToZipBase64 cost time：[{}] ms", (end - start));
+        } catch (IOException e) {
+            log.error("fileToZipBase64 IOException:[{}]", e.toString());
+        } finally {
+            close(zos);
         }
-        // 'A' - 'Z'
-        for (int i = 65; i < 91; ++i) {
-            if (value == i) {
-                return (char) i;
+
+        byte[] refereeFileBase64Bytes = Base64.getEncoder().encode(baos.toByteArray());
+        try {
+            toZipBase64 = new String(refereeFileBase64Bytes, "UTF-8");
+        } catch (IOException e) {
+            log.error("fileToZipBase64 IOException:[{}]", e.toString());
+        }
+        return toZipBase64;
+    }
+
+    /**
+     * zip Base64 解密 解压缩.
+     * 
+     * @param base64 base64加密字符
+     * @param path 解压文件夹路径
+     */
+    public static void zipBase64ToFile(String base64, String path) {
+        ByteArrayInputStream bais = null;
+        ZipInputStream zis = null;
+        try {
+            File file = new File(path);
+            if (!file.exists() && !file.isDirectory()) {
+                file.mkdirs();
             }
-        }
-        // 'a' - 'z'
-        for (int i = 97; i < 123; ++i) {
-            if (value == i) {
-                return (char) i;
+
+            byte[] byteBase64 = Base64.getDecoder().decode(base64);
+            bais = new ByteArrayInputStream(byteBase64);
+            zis = new ZipInputStream(bais);
+            ZipEntry entry = zis.getNextEntry();
+            File fout = null;
+            while (entry != null) {
+                if (entry.isDirectory()) {
+                    File subdirectory = new File(path + File.separator + entry.getName());
+                    if (!subdirectory.exists() && !subdirectory.isDirectory()) {
+                        subdirectory.mkdirs();
+                    }
+                } else {
+                    log.info("zipBase64ToFile file name:[{}]",
+                            path + File.separator + entry.getName());
+                    fout = new File(path, entry.getName());
+                    BufferedOutputStream bos = null;
+                    try {
+                        bos = new BufferedOutputStream(new FileOutputStream(fout));
+                        int offo = -1;
+                        byte[] buffer = new byte[1024];
+                        while ((offo = zis.read(buffer)) != -1) {
+                            bos.write(buffer, 0, offo);
+                        }
+                    } catch (IOException e) {
+                        log.error("base64ToFile IOException:[{}]", e.toString());
+                    } finally {
+                        close(bos);
+                    }
+                }
+                // next
+                entry = zis.getNextEntry();
             }
-        }
-        // other valid characters
-        switch (value) {
-            case '\\':
-                return '\\';
-            case '/':
-                return '/';
-            case ':':
-                return ':';
-            case '.':
-                return '.';
-            case '-':
-                return '-';
-            case '_':
-                return '_';
-            default:
-                return ' ';
+        } catch (IOException e) {
+            log.error("base64ToFile IOException:[{}]", e.toString());
+        } finally {
+            close(zis);
+            close(bais);
         }
     }
 
@@ -167,69 +175,9 @@ public class CommonUtils {
             try {
                 closeable.close();
             } catch (IOException e) {
-                System.out.println("close IOException:" + e.toString());
+                log.error("closeable IOException:[{}]", e.toString());
             }
         }
-    }
-
-    /**
-     * buildHeaders.
-     * 
-     * @return
-     */
-    public static HttpHeaders buildHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        MediaType type = MediaType.parseMediaType("application/json; charset=UTF-8");
-        headers.setContentType(type);
-        headers.add("Accept", MediaType.APPLICATION_JSON.toString());
-        return headers;
-    }
-
-    /**
-     * stringToSignatureData.
-     * 19/12/24 support guomi： add byte[] pub in signatureData
-     * @param signatureData signatureData
-     * @return
-     */
-    public static SignatureData stringToSignatureData(String signatureData) {
-        byte[] byteArr = Numeric.hexStringToByteArray(signatureData);
-        byte[] signR = new byte[32];
-        System.arraycopy(byteArr, 1, signR, 0, signR.length);
-        byte[] signS = new byte[32];
-        System.arraycopy(byteArr, 1 + signR.length, signS, 0, signS.length);
-        if (EncryptType.encryptType == 1) {
-            byte[] pub = new byte[64];
-            System.arraycopy(byteArr, 1 + signR.length + signS.length, pub, 0, pub.length);
-            return new SignatureData(byteArr[0], signR, signS, pub);
-        } else {
-            return new SignatureData(byteArr[0], signR, signS);
-        }
-    }
-
-    /**
-     * signatureDataToString.
-     * 19/12/24 support guomi： add byte[] pub in signatureData
-     * @param signatureData signatureData
-     */
-    public static String signatureDataToString(SignatureData signatureData) {
-        byte[] byteArr;
-        if(EncryptType.encryptType == 1) {
-            byteArr = new byte[1 + signatureData.getR().length + signatureData.getS().length + publicKeyLength_64];
-            byteArr[0] = signatureData.getV();
-            System.arraycopy(signatureData.getR(), 0, byteArr, 1, signatureData.getR().length);
-            System.arraycopy(signatureData.getS(), 0, byteArr, signatureData.getR().length + 1,
-                    signatureData.getS().length);
-            System.arraycopy(signatureData.getPub(), 0, byteArr,
-                    signatureData.getS().length + signatureData.getR().length + 1,
-                    signatureData.getPub().length);
-        } else {
-            byteArr = new byte[1 + signatureData.getR().length + signatureData.getS().length];
-            byteArr[0] = signatureData.getV();
-            System.arraycopy(signatureData.getR(), 0, byteArr, 1, signatureData.getR().length);
-            System.arraycopy(signatureData.getS(), 0, byteArr, signatureData.getR().length + 1,
-                    signatureData.getS().length);
-        }
-        return Numeric.toHexString(byteArr, 0, byteArr.length, false);
     }
 
     /**
@@ -300,5 +248,76 @@ public class CommonUtils {
             return false;
         }
         return true;
+    }
+
+    /**
+     * 在指定目录执行shell命令
+     * 
+     * @param command shell
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public static String shellExecuter(String command, String path) {
+        log.info("shellExecuter start. command:{}", command);
+        String shellRsp = null;
+        int exitCode = 0;
+        Process process;
+        try {
+            process = Runtime.getRuntime().exec(command, null, new File(path));
+            // 等待程序执行结束并输出状态
+            exitCode = process.waitFor();
+            if (exitCode == 0) {
+                shellRsp = readInputStream(process.getInputStream());
+            } else {
+                shellRsp = readInputStream(process.getErrorStream());
+            }
+        } catch (IOException | InterruptedException e) {
+            log.error("shellExecuter Exception:[{}]", e.toString());
+            throw new BaseException(ConstantCode.SHELL_EXECUTE_ERROR);
+        }
+
+        log.debug("shellExecuter finish. shllRsp:{}", shellRsp);
+        return shellRsp;
+    }
+
+    /**
+     * read InputStream.
+     * 
+     * @param inputStream
+     * @return
+     * @throws IOException
+     */
+    private static String readInputStream(final InputStream inputStream) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        String line = null;
+        // 逐行读取
+        while ((line = reader.readLine()) != null) {
+            sb.append(line);
+        }
+        inputStream.close();
+        return sb.toString();
+    }
+
+    /**
+     * read File.
+     * 
+     * @param filePath filePath
+     * @return
+     */
+    public static String readFile(String filePath) {
+        log.info("readFile dir:{}", filePath);
+        File file = new File(filePath);
+        if (!file.exists()) {
+            return null;
+        }
+        String result = null;
+        try {
+            result = readInputStream(new FileInputStream(file));
+        } catch (IOException e) {
+            throw new BaseException(e.getMessage());
+        }
+        return result;
     }
 }

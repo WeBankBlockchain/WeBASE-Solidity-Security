@@ -10,7 +10,7 @@
                 pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5p %c{1}(%F:%L) - %m%n" />
         </Console>
 
-        <RollingFile name="WeBASESoliditySecurity" fileName="${logPath}/WeBASE-Solidity-Security.log"
+        <RollingFile name="security" fileName="${logPath}/WeBASE-Solidity-Security.log"
             filePattern="${logPath}/WeBASE-Solidity-Security.log.%d{yyyy-MM-dd}.%i.log.gz">
             <PatternLayout
                 pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5p %c{1}(%L) - %m%n" />
@@ -22,14 +22,14 @@
             </DefaultRolloverStrategy>
         </RollingFile>
 
-        <Async name="asyncWeBASESoliditySecurity" bufferSize="512">
-            <AppenderRef ref="WeBASE-Solidity-Security" />
+        <Async name="asyncSecurity" bufferSize="512">
+            <AppenderRef ref="security" />
         </Async>
     </Appenders>
 
     <Loggers>
         <Root level="info">
-            <AppenderRef ref="asyncWeBASESoliditySecurity" />
+            <AppenderRef ref="asyncSecurity" />
         </Root>
     </Loggers>
 </Configuration>

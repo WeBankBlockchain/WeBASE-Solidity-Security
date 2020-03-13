@@ -12,7 +12,7 @@
  * the License.
  */
 
-package com.webank.webase.solidity.security.base;
+package com.webank.webase.solidity.security.base.code;
 
 /**
  * ConstantCode.
@@ -22,10 +22,11 @@ public interface ConstantCode {
     // return success
     RetCode RET_SUCCEED = RetCode.mark(0, "success");
 
-    RetCode FILE_IS_EMPTY = RetCode.mark(303009, "file cannot be empty");
-    RetCode NOT_A_ZIP_FILE = RetCode.mark(303010, "it is not a zip file");
+    // generate code
+    RetCode NO_SOL_FILES = RetCode.mark(203001, "There is no sol files under contracts folder");
+    RetCode SHELL_EXECUTE_ERROR = RetCode.mark(203002, "shell execute error");
 
     // system error
-    RetCode SYSTEM_ERROR = RetCode.mark(103001, "system error");
-    RetCode PARAM_VAILD_FAIL = RetCode.mark(103002, "param valid fail");
+    RetCode SYSTEM_EXCEPTION = RetCode.mark(103001, "system error");
+    RetCode PARAM_EXCEPTION = RetCode.mark(103002, "param valid fail");
 }

@@ -12,33 +12,36 @@
  * the License.
  */
 
-package com.webank.webase.solidity.security.base.exception;
+package com.webank.webase.solidity.security.base.code;
 
-import com.webank.webase.solidity.security.base.code.RetCode;
+import lombok.Data;
 
 /**
- * base business exception.
+ * RetCode.
+ *
  */
-public class BaseException extends RuntimeException {
+@Data
+public class RetCode {
+    private Integer code;
+    private String msg;
 
-    private static final long serialVersionUID = 1L;
-    private RetCode retCode;
+    public RetCode() {}
 
-    public BaseException(String msg) {
-        super(msg);
+    public RetCode(int code, String msg) {
+        this.code = code;
+        this.msg = msg;
     }
 
-    public BaseException(RetCode retCode) {
-        super(retCode.getMsg());
-        this.retCode = retCode;
+    public static RetCode mark(int code, String msg) {
+        return new RetCode(code, msg);
     }
 
-    public BaseException(int code, String msg) {
-        super(msg);
-        this.retCode = new RetCode(code, msg);
+    public static RetCode mark(Integer code) {
+        return new RetCode(code, null);
     }
 
-    public RetCode getRetCode() {
-        return retCode;
+    @Override
+    public String toString() {
+        return "RetCode [code=" + code + ", msg=" + msg + "]";
     }
 }

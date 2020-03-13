@@ -14,27 +14,27 @@
 
 package com.webank.webase.solidity.security.scan;
 
-import com.webank.webase.solidity.security.base.BaseController;
-import com.webank.webase.solidity.security.base.ResponseEntity;
+import com.alibaba.fastjson.JSON;
+import com.webank.webase.solidity.security.base.controller.BaseController;
 import com.webank.webase.solidity.security.base.exception.BaseException;
-import io.swagger.annotations.Api;
+import com.webank.webase.solidity.security.scan.entity.ScanInputParam;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import java.io.IOException;
-import lombok.extern.slf4j.Slf4j;
+import java.time.Duration;
+import java.time.Instant;
+import javax.validation.Valid;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * ScanController.
  * 
  */
-@Api(value = "/scan", tags = "scan interface")
-@Slf4j
+@Log4j2
 @RestController
 @RequestMapping(value = "/scan")
 public class ScanController extends BaseController {
@@ -43,16 +43,21 @@ public class ScanController extends BaseController {
 
     /**
      * contract compile.
-     * 
-     * @param file file
-     * @return
      */
     @ApiOperation(value = "contract scan", notes = "contract scan")
-    @PostMapping("/scan")
-    public ResponseEntity compile(
-            @ApiParam(value = "contract zip file",
-                    required = true) @RequestParam("file") MultipartFile file)
-            throws BaseException, IOException {
-        return scanService.scan(file);
+    @PostMapping
+    public Object scan(@RequestBody @Valid ScanInputParam scanInputParam, BindingResult result)
+            throws BaseException {
+        checkBindResult(result);
+        Instant startTime = Instant.now();
+        log.info("start scan startTime:{} compileInputParam:{}", startTime.toEpochMilli(),
+                JSON.toJSONString(scanInputParam));
+
+        Object scanResult = scanService.scan(scanInputParam);
+
+        log.info("end scan useTime:{}",
+                Duration.between(startTime, Instant.now()).toMillis());
+
+        return scanResult;
     }
 }

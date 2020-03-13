@@ -15,18 +15,13 @@
 package com.webank.webase.solidity.security.scan;
 
 
-import com.webank.webase.solidity.security.base.ConstantCode;
-import com.webank.webase.solidity.security.base.ResponseEntity;
+import com.alibaba.fastjson.JSON;
 import com.webank.webase.solidity.security.base.exception.BaseException;
-import com.webank.webase.solidity.security.scan.entity.ScanInfo;
+import com.webank.webase.solidity.security.scan.entity.ScanInputParam;
 import com.webank.webase.solidity.security.util.CommonUtils;
-
 import java.io.File;
-import java.io.IOException;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * ScanService.
@@ -35,45 +30,42 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 @Service
 public class ScanService {
+
+    private static final String BASE_COMMAND = "slither --json %s %s";
+    private static final String STR_CONTRACTS = "contracts";
+    private static final String STR_CHECK_RESULT = "checkResult.json";
+
     /**
      * contract scan.
      * 
      * @param zipFile file
      * @return
      */
-    public ResponseEntity scan(MultipartFile zipFile) throws BaseException, IOException {
-        ResponseEntity response = new ResponseEntity(ConstantCode.RET_SUCCEED);
-        String path = new File("temp").getAbsolutePath();
-        //clear temp folder
-        //CommonUtils.deleteFiles(path);
-        //unzip
-        CommonUtils.unZipFiles(zipFile, path);
-
-        exeScan(String cmd, String path)
-
-        return response;
-    }
-
-    public static ScanInfo exeScan(String cmd, String path){
-        Process proc = null;
-        try {
-            proc = Runtime.getRuntime().exec(cmd,null,new File(path));
-            proc.getInputStream();
-            proc.getErrorStream();
-            proc.waitFor();
-            Thread.sleep(1000);//等待后台线程读写完毕
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                proc.getErrorStream().close();
-                proc.getInputStream().close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            proc.destroy();
+    public Object scan(ScanInputParam inputParam) throws BaseException {
+        String path =
+                new File(STR_CONTRACTS).getAbsolutePath() + File.separator + inputParam.getAppid();
+        // clear folder
+        CommonUtils.deleteFiles(path);
+        
+        // unzip
+        CommonUtils.zipBase64ToFile(inputParam.getContractSource(), path);
+        
+        // check sol files
+        String solPath = path + File.separator + STR_CONTRACTS;
+        File solFileList = new File(solPath);
+        File[] solFiles = solFileList.listFiles();
+        if (solFiles == null || solFiles.length == 0) {
+            log.error("There is no sol files under contracts folder.");
+            return null;
         }
+        
+        // shell execute
+        String resultPath = path + File.separator + STR_CHECK_RESULT;
+        String command = String.format(BASE_COMMAND, resultPath, solPath);
+        CommonUtils.shellExecuter(command, path);
+        
+        // get result
+        String result = CommonUtils.readFile(resultPath);
+        return JSON.parse(result);
     }
 }
