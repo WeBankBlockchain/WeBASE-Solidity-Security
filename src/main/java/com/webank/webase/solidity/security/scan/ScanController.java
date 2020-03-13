@@ -15,17 +15,12 @@
 package com.webank.webase.solidity.security.scan;
 
 import com.alibaba.fastjson.JSON;
-import com.webank.webase.solidity.security.base.ResponseEntity;
-import com.webank.webase.solidity.security.base.code.ConstantCode;
 import com.webank.webase.solidity.security.base.controller.BaseController;
 import com.webank.webase.solidity.security.base.exception.BaseException;
-import com.webank.webase.solidity.security.scan.entity.ScanInfo;
 import com.webank.webase.solidity.security.scan.entity.ScanInputParam;
 import io.swagger.annotations.ApiOperation;
-import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 import javax.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,21 +46,18 @@ public class ScanController extends BaseController {
      */
     @ApiOperation(value = "contract scan", notes = "contract scan")
     @PostMapping
-    public ResponseEntity scan(@RequestBody @Valid ScanInputParam scanInputParam,
-            BindingResult result) throws BaseException, IOException {
+    public Object scan(@RequestBody @Valid ScanInputParam scanInputParam, BindingResult result)
+            throws BaseException {
         checkBindResult(result);
-        ResponseEntity baseResponse = new ResponseEntity(ConstantCode.RET_SUCCEED);
         Instant startTime = Instant.now();
         log.info("start scan startTime:{} compileInputParam:{}", startTime.toEpochMilli(),
                 JSON.toJSONString(scanInputParam));
 
-        List<ScanInfo> rspContractCompile = scanService.scan(scanInputParam);
-        baseResponse.setData(rspContractCompile);
+        Object scanResult = scanService.scan(scanInputParam);
 
-        log.info("end scan useTime:{} result:{}",
-                Duration.between(startTime, Instant.now()).toMillis(),
-                JSON.toJSONString(baseResponse));
+        log.info("end scan useTime:{}",
+                Duration.between(startTime, Instant.now()).toMillis());
 
-        return baseResponse;
+        return scanResult;
     }
 }

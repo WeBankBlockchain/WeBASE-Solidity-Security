@@ -24,6 +24,10 @@ public class BaseException extends RuntimeException {
     private static final long serialVersionUID = 1L;
     private RetCode retCode;
 
+    public BaseException(String msg) {
+        super(msg);
+    }
+
     public BaseException(RetCode retCode) {
         super(retCode.getMsg());
         this.retCode = retCode;

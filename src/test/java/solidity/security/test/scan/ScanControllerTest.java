@@ -54,7 +54,7 @@ public class ScanControllerTest {
 
     @Test
     public void testScan() throws Exception {
-        String filePath = "D:\\project\\sol\\sol.zip";
+        String filePath = "D:\\project\\sol\\appid001\\appid001.zip";
         String base64 = CommonUtils.fileToBase64(filePath);
         log.info("testScan contractSource:[{}]", base64);
 

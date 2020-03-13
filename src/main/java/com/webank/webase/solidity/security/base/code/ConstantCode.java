@@ -23,7 +23,8 @@ public interface ConstantCode {
     RetCode RET_SUCCEED = RetCode.mark(0, "success");
 
     // generate code
-    RetCode SHELL_EXECUTE_ERROR = RetCode.mark(203001, "shell execute error");
+    RetCode NO_SOL_FILES = RetCode.mark(203001, "There is no sol files under contracts folder");
+    RetCode SHELL_EXECUTE_ERROR = RetCode.mark(203002, "shell execute error");
 
     // system error
     RetCode SYSTEM_EXCEPTION = RetCode.mark(103001, "system error");

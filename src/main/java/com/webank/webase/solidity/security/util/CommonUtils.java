@@ -17,7 +17,6 @@ package com.webank.webase.solidity.security.util;
 import com.alibaba.fastjson.JSON;
 import com.webank.webase.solidity.security.base.code.ConstantCode;
 import com.webank.webase.solidity.security.base.exception.BaseException;
-import com.webank.webase.solidity.security.scan.entity.ScanInfo;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -44,7 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 public class CommonUtils {
 
     /**
-     * 文件转Base64
+     * 文件Base64加密
      * 
      * @param filePath 文件路径
      * @return
@@ -131,21 +130,29 @@ public class CommonUtils {
             zis = new ZipInputStream(bais);
             ZipEntry entry = zis.getNextEntry();
             File fout = null;
-            while (entry != null && !entry.isDirectory()) {
-                log.info("zipBase64ToFile file name:[{}]", entry.getName());
-                fout = new File(path, entry.getName());
-                BufferedOutputStream bos = null;
-                try {
-                    bos = new BufferedOutputStream(new FileOutputStream(fout));
-                    int offo = -1;
-                    byte[] buffer = new byte[1024];
-                    while ((offo = zis.read(buffer)) != -1) {
-                        bos.write(buffer, 0, offo);
+            while (entry != null) {
+                if (entry.isDirectory()) {
+                    File subdirectory = new File(path + File.separator + entry.getName());
+                    if (!subdirectory.exists() && !subdirectory.isDirectory()) {
+                        subdirectory.mkdirs();
                     }
-                } catch (IOException e) {
-                    log.error("base64ToFile IOException:[{}]", e.toString());
-                } finally {
-                    close(bos);
+                } else {
+                    log.info("zipBase64ToFile file name:[{}]",
+                            path + File.separator + entry.getName());
+                    fout = new File(path, entry.getName());
+                    BufferedOutputStream bos = null;
+                    try {
+                        bos = new BufferedOutputStream(new FileOutputStream(fout));
+                        int offo = -1;
+                        byte[] buffer = new byte[1024];
+                        while ((offo = zis.read(buffer)) != -1) {
+                            bos.write(buffer, 0, offo);
+                        }
+                    } catch (IOException e) {
+                        log.error("base64ToFile IOException:[{}]", e.toString());
+                    } finally {
+                        close(bos);
+                    }
                 }
                 // next
                 entry = zis.getNextEntry();
@@ -251,7 +258,8 @@ public class CommonUtils {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static ScanInfo shellExecuter(String command, String path) {
+    public static String shellExecuter(String command, String path) {
+        log.info("shellExecuter start. command:{}", command);
         String shellRsp = null;
         int exitCode = 0;
         Process process;
@@ -260,9 +268,9 @@ public class CommonUtils {
             // 等待程序执行结束并输出状态
             exitCode = process.waitFor();
             if (exitCode == 0) {
-                shellRsp = readProcessOutput(process.getInputStream());
+                shellRsp = readInputStream(process.getInputStream());
             } else {
-                shellRsp = readProcessOutput(process.getErrorStream());
+                shellRsp = readInputStream(process.getErrorStream());
             }
         } catch (IOException | InterruptedException e) {
             log.error("shellExecuter Exception:[{}]", e.toString());
@@ -270,25 +278,46 @@ public class CommonUtils {
         }
 
         log.debug("shellExecuter finish. shllRsp:{}", shellRsp);
-        return new ScanInfo("", exitCode, shellRsp);
+        return shellRsp;
     }
 
     /**
-     * 获取脚本执行的返回信息
+     * read InputStream.
      * 
-     * @param process
+     * @param inputStream
      * @return
      * @throws IOException
      */
-    private static String readProcessOutput(final InputStream inputStream) throws IOException {
-        StringBuilder processRsp = new StringBuilder();
+    private static String readInputStream(final InputStream inputStream) throws IOException {
+        StringBuilder sb = new StringBuilder();
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         String line = null;
         // 逐行读取
         while ((line = reader.readLine()) != null) {
-            processRsp.append(line);
+            sb.append(line);
         }
         inputStream.close();
-        return processRsp.toString();
+        return sb.toString();
+    }
+
+    /**
+     * read File.
+     * 
+     * @param filePath filePath
+     * @return
+     */
+    public static String readFile(String filePath) {
+        log.info("readFile dir:{}", filePath);
+        File file = new File(filePath);
+        if (!file.exists()) {
+            return null;
+        }
+        String result = null;
+        try {
+            result = readInputStream(new FileInputStream(file));
+        } catch (IOException e) {
+            throw new BaseException(e.getMessage());
+        }
+        return result;
     }
 }
