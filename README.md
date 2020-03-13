@@ -144,8 +144,9 @@ sudo cp solc /bin/
 
 安装成功可用命令检查
 
-`root@VM-0-4-ubuntu:/home/ubuntu# slither --version`
-`0.6.9`
+```
+slither --version
+```
 
 ### 3.2 WeBASE-Solidity-Security服务安装
 
@@ -163,7 +164,7 @@ cd WeBASE-Solidity-Security
 
 ####  3.2.1 编译代码
 
-使用以下方式编译构建，如果出现问题可以查看 [常见问题解答](./appendix.html#id6) ：
+使用以下方式编译构建：
 
 方式一：如果服务器已安装Gradle，且版本为Gradle-4.10或以上
 
@@ -194,7 +195,7 @@ chmod +x ./gradlew && ./gradlew build -x test
 	Application() - main run success...
 ```
 
-## 3.2.3 查看日志
+#### 3.2.3 查看日志
 
 在dist目录查看：
 
