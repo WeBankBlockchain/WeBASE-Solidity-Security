@@ -56,7 +56,7 @@ public class ScanService {
         File[] solFiles = solFileList.listFiles();
         if (solFiles == null || solFiles.length == 0) {
             log.error("There is no sol files under contracts folder.");
-            return null;
+            throw new BaseException(ConstantCode.NO_SOL_FILES);
         }
         
         // shell execute
