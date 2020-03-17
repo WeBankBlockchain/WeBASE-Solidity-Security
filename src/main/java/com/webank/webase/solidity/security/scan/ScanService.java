@@ -16,8 +16,11 @@ package com.webank.webase.solidity.security.scan;
 
 
 import com.alibaba.fastjson.JSON;
+import com.webank.webase.solidity.security.base.ResponseEntity;
+import com.webank.webase.solidity.security.base.code.ConstantCode;
 import com.webank.webase.solidity.security.base.exception.BaseException;
 import com.webank.webase.solidity.security.scan.entity.ScanInputParam;
+import com.webank.webase.solidity.security.scan.entity.ScanResult;
 import com.webank.webase.solidity.security.util.CommonUtils;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
@@ -41,15 +44,15 @@ public class ScanService {
      * @param zipFile file
      * @return
      */
-    public Object scan(ScanInputParam inputParam) throws BaseException {
+    public ResponseEntity scan(ScanInputParam inputParam) throws BaseException {
         String path =
                 new File(STR_CONTRACTS).getAbsolutePath() + File.separator + inputParam.getAppid();
         // clear folder
         CommonUtils.deleteFiles(path);
-        
+
         // unzip
         CommonUtils.zipBase64ToFile(inputParam.getContractSource(), path);
-        
+
         // check sol files
         String solPath = path + File.separator + STR_CONTRACTS;
         File solFileList = new File(solPath);
@@ -58,14 +61,25 @@ public class ScanService {
             log.error("There is no sol files under contracts folder.");
             throw new BaseException(ConstantCode.NO_SOL_FILES);
         }
-        
+
         // shell execute
         String resultPath = path + File.separator + STR_CHECK_RESULT;
         String command = String.format(BASE_COMMAND, resultPath, solPath);
         CommonUtils.shellExecuter(command, path);
-        
+
         // get result
+        ResponseEntity baseResponse = new ResponseEntity(ConstantCode.RET_SUCCEED);
         String result = CommonUtils.readFile(resultPath);
-        return JSON.parse(result);
+        ScanResult scanResult = CommonUtils.object2JavaBean(JSON.parse(result), ScanResult.class);
+        if (!scanResult.isSuccess()) {
+            log.error("contracts abnormal");
+            throw new BaseException(ConstantCode.CONTRACTS_ABNORMAL.getCode(),
+                    scanResult.getError());
+        }
+
+        // return
+        baseResponse.setMessage(scanResult.getError());
+        baseResponse.setData(scanResult.getResults());
+        return baseResponse;
     }
 }

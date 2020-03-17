@@ -15,6 +15,7 @@
 package com.webank.webase.solidity.security.scan;
 
 import com.alibaba.fastjson.JSON;
+import com.webank.webase.solidity.security.base.ResponseEntity;
 import com.webank.webase.solidity.security.base.controller.BaseController;
 import com.webank.webase.solidity.security.base.exception.BaseException;
 import com.webank.webase.solidity.security.scan.entity.ScanInputParam;
@@ -46,18 +47,16 @@ public class ScanController extends BaseController {
      */
     @ApiOperation(value = "contract scan", notes = "contract scan")
     @PostMapping
-    public Object scan(@RequestBody @Valid ScanInputParam scanInputParam, BindingResult result)
-            throws BaseException {
+    public ResponseEntity scan(@RequestBody @Valid ScanInputParam scanInputParam,
+            BindingResult result) throws BaseException {
         checkBindResult(result);
         Instant startTime = Instant.now();
         log.info("start scan startTime:{} compileInputParam:{}", startTime.toEpochMilli(),
                 JSON.toJSONString(scanInputParam));
 
-        Object scanResult = scanService.scan(scanInputParam);
+        ResponseEntity scanResult = scanService.scan(scanInputParam);
 
-        log.info("end scan useTime:{}",
-                Duration.between(startTime, Instant.now()).toMillis());
-
+        log.info("end scan useTime:{}", Duration.between(startTime, Instant.now()).toMillis());
         return scanResult;
     }
 }
