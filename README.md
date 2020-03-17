@@ -39,12 +39,12 @@ HTTP POST
 
 #### 请求参数
 
-**1）参数表**
+***1）入参表***
 
-| **序号** | **中文** | **参数名**     | **类型** | **最大长度** | **必填**                    |
-| -------- | -------- | -------------- | -------- | ------------ | --------------------------- |
-| 1        | 业务编号 | appid          | string   |              | 用来区分合约                |
-| 2        | 合约信息 | contractSource | string   |              | 合约文件zip压缩包Base64编码 |
+| 序号 | 输入参数       | 类型   | 可为空 | 备注                        |
+| ---- | -------------- | ------ | ------ | --------------------------- |
+| 1    | appid          | String | 否     | 业务编号，用来区分合约      |
+| 2    | contractSource | String | 否     | 合约文件zip压缩包Base64编码 |
 
 **2）数据格式**
 
@@ -57,20 +57,22 @@ HTTP POST
 
 #### 响应参数
 
-**1）参数表**
+***1）出参表***
 
-| **序号** | **中文** | **参数名** | **类型** | **最大长度** | **必填** | **说明** |
-| -------- | -------- | ---------- | -------- | ------------ | -------- | -------- |
-| 1        | 返回信息 |            | Json     |              | 是       |          |
+| 序号 | 输出参数 | 类型   | 可为空 | 备注                       |
+| ---- | -------- | ------ | ------ | -------------------------- |
+| 1    | code     | Int    | 否     | 返回码，0：正常 其它：异常 |
+| 2    | message  | String | 是     | 错误信息                   |
+| 3    | data     | Json   | 是     | 检测结果                   |
 
 **2）数据格式**
 
 a.检测正常返回结果示例
 ```
 {
-  "success": true,
-  "error": null,
-  "results": {
+  "code": 0,
+  "message": null,
+  "data": {
     "detectors": [
       {
         "elements": [
@@ -87,7 +89,7 @@ a.检测正常返回结果示例
               "lines": [
                 1
               ],
-              "filename_absolute": "/WeBASE-Solidity-Security/dist/contracts/appid001/contracts/HelloWorld.sol"
+              "filename_absolute": "/dist/contracts/appid001/contracts/HelloWorld.sol"
             },
             "name": "^0.4.2",
             "type": "pragma",
@@ -100,7 +102,14 @@ a.检测正常返回结果示例
               ]
             }
           }
-        ]
+        ],
+        "impact": "Informational",
+        "confidence": "High",
+        "markdown": "Pragma version[^0.4.2](contracts/HelloWorld.sol#L1) allows old versions\n",
+        "description": "Pragma version^0.4.2 (contracts/HelloWorld.sol#1) allows old versions\n",
+        "id": "b93b7ce0902076867f801a1b62ad7557d0305767e196372ed38c0d7076440c1e",
+        "check": "solc-version"
+      }
     ]
   }
 }
@@ -108,11 +117,22 @@ a.检测正常返回结果示例
 b.检测异常返回结果示例
 ```
 {
-  "success": false,
-  "error": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.6/dist-packages/crytic_compile/platform/solc.py\", line 309, in _run_solc\n    ret = json.loads(stdout)\n  File \"/usr/lib/python3.6/json/__init__.py\", line 354, in loads\n    return _default_decoder.decode(s)\n  File \"/usr/lib/python3.6/json/decoder.py\", line 339, in decode\n    obj, end = self.raw_decode(s, idx=_w(s, 0).end())\n  File \"/usr/lib/python3.6/json/decoder.py\", line 357, in raw_decode\n    raise JSONDecodeError(\"Expecting value\", s, err.value) from None\njson.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.6/dist-packages/slither/__main__.py\", line 578, in main_impl\n    (slither_instances, results_detectors, results_printers, number_contracts) = process_all(filename, args, detector_classes, printer_classes)\n  File \"/usr/local/lib/python3.6/dist-packages/slither/__main__.py\", line 60, in process_all\n    compilations = compile_all(target, **vars(args))\n  File \"/usr/local/lib/python3.6/dist-packages/crytic_compile/crytic_compile.py\", line 1023, in compile_all\n    compilations.append(CryticCompile(filename, **kwargs))\n  File \"/usr/local/lib/python3.6/dist-packages/crytic_compile/crytic_compile.py\", line 142, in __init__\n    self._compile(target, **kwargs)\n  File \"/usr/local/lib/python3.6/dist-packages/crytic_compile/crytic_compile.py\", line 915, in _compile\n    self._platform.compile(self, target, **kwargs)\n  File \"/usr/local/lib/python3.6/dist-packages/crytic_compile/platform/solc.py\", line 90, in compile\n    working_dir=solc_working_dir,\n  File \"/usr/local/lib/python3.6/dist-packages/crytic_compile/platform/solc.py\", line 312, in _run_solc\n    raise InvalidCompilation(f\"Invalid solc compilation {stderr}\")\ncrytic_compile.platform.exceptions.InvalidCompilation: Invalid solc compilation /data/mingzhenliu/webase/WeBASE-Solidity-Security/dist/contracts/appid003/contracts/HelloWorld.sol:6:16: Error: Expected ';' but got '('\n    functio get()constant returns(string){\r\n               ^\ncontracts/HelloWorld.sol:6:16: Error: Expected ';' but got '('\n    functio get()constant returns(string){\r\n               ^\n\n",
-  "results": {}
+  "code": 203003,
+  "message": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.6/dist-packages/crytic_compile/platform/solc.py\", line 309, in _run_solc\n    ret = json.loads(stdout)\n  File \"/usr/lib/python3.6/json/__init__.py\", line 354, in loads\n    return _default_decoder.decode(s)\n  File \"/usr/lib/python3.6/json/decoder.py\", line 339, in decode\n    obj, end = self.raw_decode(s, idx=_w(s, 0).end())\n  File \"/usr/lib/python3.6/json/decoder.py\", line 357, in raw_decode\n    raise JSONDecodeError(\"Expecting value\", s, err.value) from None\njson.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.6/dist-packages/slither/__main__.py\", line 578, in main_impl\n    (slither_instances, results_detectors, results_printers, number_contracts) = process_all(filename, args, detector_classes, printer_classes)\n  File \"/usr/local/lib/python3.6/dist-packages/slither/__main__.py\", line 60, in process_all\n    compilations = compile_all(target, **vars(args))\n  File \"/usr/local/lib/python3.6/dist-packages/crytic_compile/crytic_compile.py\", line 1023, in compile_all\n    compilations.append(CryticCompile(filename, **kwargs))\n  File \"/usr/local/lib/python3.6/dist-packages/crytic_compile/crytic_compile.py\", line 142, in __init__\n    self._compile(target, **kwargs)\n  File \"/usr/local/lib/python3.6/dist-packages/crytic_compile/crytic_compile.py\", line 915, in _compile\n    self._platform.compile(self, target, **kwargs)\n  File \"/usr/local/lib/python3.6/dist-packages/crytic_compile/platform/solc.py\", line 90, in compile\n    working_dir=solc_working_dir,\n  File \"/usr/local/lib/python3.6/dist-packages/crytic_compile/platform/solc.py\", line 312, in _run_solc\n    raise InvalidCompilation(f\"Invalid solc compilation {stderr}\")\ncrytic_compile.platform.exceptions.InvalidCompilation: Invalid solc compilation /data/mingzhenliu/webase/WeBASE-Solidity-Security/dist/contracts/appid003/contracts/HelloWorld.sol:6:16: Error: Expected ';' but got '('\n    functio get()constant returns(string){\r\n               ^\ncontracts/HelloWorld.sol:6:16: Error: Expected ';' but got '('\n    functio get()constant returns(string){\r\n               ^\n\n",
+  "data": null
 }
 ```
+
+**3）返回码信息**
+
+| Codze  | message                                      | 描述                        |
+| ------ | -------------------------------------------- | --------------------------- |
+| 0      | success                                      | 正常                        |
+| 103001 | system error                                 | 系统异常                    |
+| 103002 | param valid fail                             | 参数错误                    |
+| 203001 | There is no sol files under contracts folder | contracts文件夹下不存在合约 |
+| 203002 | shell execute error                          | shell执行错误               |
+| 203003 | contracts abnormal                           | 合约检测异常                |
 
 ## 3. 服务安装
 
