@@ -156,12 +156,9 @@ pip install slither-analyzer
 根据需要检测的不同的合约版本，部署合约编译器 solc。此处以0.4.25合约为例，下载后放入PATH目录中。
 
 ``` bash
-curl -LO https://github.com/FISCO-BCOS/solidity/releases/download/v0.4.25/solc-static-linux # 其它版本自行下载：https://github.com/FISCO-BCOS/solidity/releases
-chmod +x solc-static-linux
-mv solc-static-linux solc
-sudo cp solc /bin/
+curl -LO https://github.com/FISCO-BCOS/solidity/releases/download/v0.4.25/solc-linux.tar.gz
 ```
-
+解压后，将可执行文件copy到/bin目录
 安装成功可用命令检查
 
 ```
