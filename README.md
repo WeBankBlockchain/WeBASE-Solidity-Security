@@ -1,6 +1,6 @@
 # WeBASE-Solidity-Security
 
-
+[![Code Lines](https://tokei.rs/b1/github/WeBankFinTech/WeBASE-Solidity-Security?category=code)](https://github.com/WeBankFinTech/WeBASE-Solidity-Security)
 
 ## 1. 合约安全检测服务说明
 
